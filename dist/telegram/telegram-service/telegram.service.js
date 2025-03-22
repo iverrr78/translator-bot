@@ -17,12 +17,14 @@ let TelegramService = class TelegramService {
     translationService;
     BOT_TOKEN = process.env.BOT_TOKEN;
     offset = 0;
-    languageMap = {
-        "es": "Spanish",
-        "en": "English",
-        "fr": "French",
-        "de": "German",
-    };
+    LanguageOptions = new Map([
+        ['es', 'Spanish'],
+        ['en', 'English'],
+        ['fr', 'French'],
+        ['de', 'German'],
+    ]);
+    targetLanguage;
+    chats = new Map();
     constructor(translationService) {
         this.translationService = translationService;
     }
@@ -45,26 +47,26 @@ let TelegramService = class TelegramService {
         console.log("test2");
         const chat_id = message.message.chat.id;
         if (message.message.text === '/start') {
-            const initialresponse = this.sendInitialOptions(message);
-            await axios_1.default.post(`https://api.telegram.org/bot${this.BOT_TOKEN}/sendMessage`, {
-                chat_id: chat_id,
-                text: initialresponse,
-            });
+            await this.sendInitialOptions(message);
+            return;
         }
-        await this.sendMessage(chat_id, "mensaje");
+        const translatedMessage = await this.translationService.translateText(message.message.text, this.targetLanguage);
+        console.log("translatedMessage:", translatedMessage);
+        await this.sendMessage(chat_id, translatedMessage);
         return;
     }
     async sendInitialOptions(message) {
         console.log("test4");
         const chat_id = message.message.chat.id;
+        this.chats.set(chat_id, { user1: chat_id, user2: 0 });
         await this.sendMessage(chat_id, "I'm a transaltor bot. Send me a message and I'll translate it to Spanish.");
         const data = {
             chat_id: chat_id,
             text: "Choose a language to translate to:",
             reply_markup: {
                 inline_keyboard: [
-                    [{ text: "Spanish", callback_data: "es" }, { text: "English", callback_data: "en" }],
-                    [{ text: "French", callback_data: "fr" }, { text: "German", callback_data: "de" }],
+                    [{ text: "Spanish", callback_data: "Spanish" }, { text: "English", callback_data: "English" }],
+                    [{ text: "French", callback_data: "French" }, { text: "German", callback_data: "German" }],
                 ],
                 resize_keyboard: true,
                 one_time_keyboard: true,
@@ -72,7 +74,16 @@ let TelegramService = class TelegramService {
         };
         await axios_1.default.post(`https://api.telegram.org/bot${this.BOT_TOKEN}/sendMessage`, data);
         let user1 = false;
-        const targetLanguage = await this.fetchUpdates();
+        while (!user1) {
+            console.log("test5");
+            const updates = await this.fetchUpdates();
+            console.log("updates:", updates.data.result[0]);
+            if (updates.data.result.length > 0) {
+                this.targetLanguage = updates.data.result[0].callback_query.data;
+                this.offset = updates.data.result[0].update_id + 1;
+                user1 = true;
+            }
+        }
         console.log("test6");
         return;
     }

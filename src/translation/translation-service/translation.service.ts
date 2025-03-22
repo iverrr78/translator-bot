@@ -1,31 +1,34 @@
 import { Injectable } from '@nestjs/common';
-import { HfInference } from '@huggingface/inference';
+import {OpenAI} from 'openai';
 
 @Injectable()
 export class TranslationService {
-    private HUGGINGFACE_TOKEN = process.env.HUGGINGFACE_TOKEN;
-    private hf = new HfInference(this.HUGGINGFACE_TOKEN);
-    private languagedetectionmodel = "papluca/xlm-roberta-base-language-detection";
-    private translationmodel = "facebook/mbart-large-50-many-to-many-mmt";
+    //private OPENAI_TOKEN;
+    private Client = new OpenAI({apiKey: process.env.OPENAI_TOKEN});
 
-    async identifyLanguage(message: string){
-        return await this.hf.textClassification({
-            model: this.languagedetectionmodel,
-            inputs: message
+    /*constructor(){
+        this.OPENAI_TOKEN = process.env.OPENAI_TOKEN;
+        this.Client = new OpenAI({apiKey: this.OPENAI_TOKEN});
+    }*/
+
+    async translateText(message: string, targetLanguage: any){
+        const translatedText = await this.Client.chat.completions.create({
+            model: "gpt-4o-mini",
+            messages: [
+                {
+                    role: "system",
+                    content: `Translate this text to ${targetLanguage}`
+                },
+                {
+                    role: "user",
+                    content: message
+                }
+            ]
         })
-    }
 
-    async translateText(message: string, targetLanguage: string){
-        const originalLanguage = await this.identifyLanguage(message);
-        return await this.hf.translation({
-            model: this.translationmodel,
-            inputs: message,
-            timeout: 10000,
-            parameters: {
-                tgt_lang: "en",
-                src_lang: "es"
-            }
-    })
-}
+        console.log("translatedText:", translatedText.choices[0].message.content);
+
+        return translatedText.choices[0].message.content;
+    }
 
 }

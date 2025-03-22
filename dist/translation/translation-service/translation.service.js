@@ -8,29 +8,25 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.TranslationService = void 0;
 const common_1 = require("@nestjs/common");
-const inference_1 = require("@huggingface/inference");
+const openai_1 = require("openai");
 let TranslationService = class TranslationService {
-    HUGGINGFACE_TOKEN = process.env.HUGGINGFACE_TOKEN;
-    hf = new inference_1.HfInference(this.HUGGINGFACE_TOKEN);
-    languagedetectionmodel = "papluca/xlm-roberta-base-language-detection";
-    translationmodel = "facebook/mbart-large-50-many-to-many-mmt";
-    async identifyLanguage(message) {
-        return await this.hf.textClassification({
-            model: this.languagedetectionmodel,
-            inputs: message
-        });
-    }
+    Client = new openai_1.OpenAI({ apiKey: process.env.OPENAI_TOKEN });
     async translateText(message, targetLanguage) {
-        const originalLanguage = await this.identifyLanguage(message);
-        return await this.hf.translation({
-            model: this.translationmodel,
-            inputs: message,
-            timeout: 10000,
-            parameters: {
-                tgt_lang: "en",
-                src_lang: "es"
-            }
+        const translatedText = await this.Client.chat.completions.create({
+            model: "gpt-4o-mini",
+            messages: [
+                {
+                    role: "system",
+                    content: `Translate this text to ${targetLanguage}`
+                },
+                {
+                    role: "user",
+                    content: message
+                }
+            ]
         });
+        console.log("translatedText:", translatedText.choices[0].message.content);
+        return translatedText.choices[0].message.content;
     }
 };
 exports.TranslationService = TranslationService;

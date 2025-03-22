@@ -20,12 +20,12 @@
     "test:e2e": "jest --config ./test/jest-e2e.json"
   },
   "dependencies": {
-    "@huggingface/inference": "^3.5.2",
     "@nestjs/common": "^11.0.1",
     "@nestjs/core": "^11.0.1",
     "@nestjs/platform-express": "^11.0.1",
     "axios": "^1.8.2",
     "dotenv": "^16.4.7",
+    "openai": "^4.87.4",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1"
   },

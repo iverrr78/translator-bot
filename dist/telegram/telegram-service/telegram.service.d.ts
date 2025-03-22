@@ -3,13 +3,15 @@ export declare class TelegramService {
     private readonly translationService;
     private BOT_TOKEN;
     private offset;
-    private languageMap;
+    private LanguageOptions;
+    private targetLanguage;
+    private chats;
     constructor(translationService: TranslationService);
     private fetchUpdates;
     getMessage(): Promise<void>;
     processMessage(message: any): Promise<void>;
     sendInitialOptions(message: any): Promise<void>;
-    sendMessage(chat_id: number, text: string): Promise<import("axios").AxiosResponse<any, any>>;
+    sendMessage(chat_id: number, text: any): Promise<import("axios").AxiosResponse<any, any>>;
     startPolling(): Promise<void>;
     onModuleInit(): Promise<void>;
 }
